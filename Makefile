@@ -18,4 +18,5 @@ build:
 	@mkdir -p build
 
 clean:
-	rm -rf build/ preview.tex
+	docker run --rm -v $(CURDIR):/work --entrypoint="" $(IMAGE) sh -c "rm -rf /work/build"
+	@rm -f preview.tex

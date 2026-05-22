@@ -1,0 +1,51 @@
+name: Build Thesis
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create/update releases
+  packages: read    # pull from ghcr.io/mbait/*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build PDF
+        run: make all
+
+      # Docker runs as root; make build/ readable before upload
+      - name: Fix build directory permissions
+        run: sudo chmod -R a+r build/
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: thesis-pdf-${{ github.sha }}
+          path: build/main.pdf
+          retention-days: 90
+
+      - name: Publish PDF to latest-build release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-build
+          name: "Последняя сборка"
+          prerelease: true
+          files: build/main.pdf
+          body: |
+            Автоматическая сборка от ${{ github.run_number }}
+            Ветка: `${{ github.ref_name }}`
+            Коммит: `${{ github.sha }}`
