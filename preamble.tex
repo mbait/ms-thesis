@@ -1,8 +1,7 @@
 % LuaLaTeX: language and Unicode font support
-% CMU Serif = Computer Modern Unicode — стандартный вид LaTeX с поддержкой кириллицы
 \usepackage{fontspec}
-\setmainfont{CMU Serif}
-\setsansfont{CMU Sans Serif}
+\setmainfont{PT Astra Serif}
+\setsansfont{PT Astra Sans}
 \setmonofont{CMU Typewriter Text}
 \usepackage{polyglossia}
 \setmainlanguage{russian}
@@ -42,6 +41,11 @@
 % Bibliography
 \usepackage[numbers,sort&compress]{natbib}
 \bibliographystyle{unsrt}
+
+% Hyphenation and justification
+% NOTE: full Russian hyphenation requires hyphen-russian in the Docker image.
+% microtype (font expansion) reduces overfull lines even without hyphenation patterns.
+\usepackage{microtype}
 
 % Hyperlinks (load last)
 \usepackage{hyperref}
