@@ -1,0 +1,31 @@
+\documentclass[14pt,a4paper]{extreport}
+\input{preamble}
+
+\begin{document}
+
+% Front matter
+\setcounter{page}{3}  % title page = 1, реферат = 2 (to be added)
+\tableofcontents
+\clearpage
+
+% Main sections
+\input{sections/intro}
+
+\input{sections/ch1/ch1}
+\input{sections/ch2/ch2}
+\input{sections/ch3/ch3}
+\input{sections/ch4/ch4}
+\input{sections/ch5/ch5}
+
+\input{sections/conclusion}
+
+% Bibliography
+\clearpage
+\addcontentsline{toc}{chapter}{СПИСОК ИСПОЛЬЗОВАННЫХ ИСТОЧНИКОВ}
+\bibliography{bibliography/refs}
+
+% Appendices (uncomment when ready)
+% \appendix
+% \include{sections/appendix}
+
+\end{document}
