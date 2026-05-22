@@ -1,6 +1,5 @@
 build/
 preview.tex
-*.pdf
 *.aux
 *.log
 *.out

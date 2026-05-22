@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: thesis-pdf-${{ github.sha }}
-          path: build/main.pdf
+          path: build/thesis.pdf
           retention-days: 90
 
       - name: Publish PDF to latest-build release
@@ -44,7 +44,7 @@ jobs:
           tag_name: latest-build
           name: "Последняя сборка"
           prerelease: true
-          files: build/main.pdf
+          files: build/thesis.pdf
           body: |
             Автоматическая сборка от ${{ github.run_number }}
             Ветка: `${{ github.ref_name }}`

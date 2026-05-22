@@ -5,7 +5,7 @@ FLAGS  := -output-directory=build -interaction=nonstopmode -halt-on-error -bibte
 .PHONY: all preview clean
 
 all: build
-	$(DOCKER) $(FLAGS) main.tex
+	$(DOCKER) $(FLAGS) thesis.tex
 
 # Build a single section for quick preview.
 # Usage: make preview SECTION=sections/ch1/1_1_sim_tasks

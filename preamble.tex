@@ -1,143 +1,33 @@
-% --------------------------------------------------------
-% Fonts (LuaLaTeX + fontspec)
-% --------------------------------------------------------
+% LuaLaTeX: language and Unicode font support
+% CMU Serif = Computer Modern Unicode — стандартный вид LaTeX с поддержкой кириллицы
 \usepackage{fontspec}
-\setmainfont{PT Astra Serif}
-\setsansfont{PT Astra Sans}
-\setmonofont{CMU Typewriter Text}[Scale=0.85]
-
-% --------------------------------------------------------
-% Language (Russian primary)
-% --------------------------------------------------------
+\setmainfont{CMU Serif}
+\setsansfont{CMU Sans Serif}
+\setmonofont{CMU Typewriter Text}
 \usepackage{polyglossia}
 \setmainlanguage{russian}
 \setotherlanguage{english}
 
-% --------------------------------------------------------
-% Page layout (ГОСТ)
-% --------------------------------------------------------
-\usepackage{geometry}
-\geometry{
-  a4paper,
-  left=30mm, right=15mm,
-  top=20mm,  bottom=20mm,
-}
-
-% --------------------------------------------------------
-% Spacing and paragraphs
-% --------------------------------------------------------
-\usepackage{setspace}
-\onehalfspacing
-\setlength{\parindent}{1.25cm}
-\usepackage{indentfirst}
-
-% --------------------------------------------------------
-% Page style: no header, page number at bottom centre
-% --------------------------------------------------------
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyhf{}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0pt}
-\fancypagestyle{plain}{%
-  \fancyhf{}
-  \fancyfoot[C]{\thepage}
-  \renewcommand{\headrulewidth}{0pt}
-}
-
-% --------------------------------------------------------
-% Chapter and section headings (ГОСТ-style, no titlesec)
-% --------------------------------------------------------
-\makeatletter
-% Numbered chapter: "1 НАЗВАНИЕ" — centred, bold, 16pt
-\renewcommand{\@makechapterhead}[1]{%
-  \vspace*{10\p@}%
-  {\parindent \z@ \centering \normalfont
-   \fontsize{16}{20}\bfseries
-   \thechapter\enspace\MakeUppercase{#1}%
-   \par\nobreak\vskip 20\p@}%
-}
-% Unnumbered chapter (ВВЕДЕНИЕ, ЗАКЛЮЧЕНИЕ, etc.)
-\renewcommand{\@makeschapterhead}[1]{%
-  \vspace*{10\p@}%
-  {\parindent \z@ \centering \normalfont
-   \fontsize{16}{20}\bfseries
-   \MakeUppercase{#1}%
-   \par\nobreak\vskip 20\p@}%
-}
-% Remove chapter prefix ("Chapter", "Глава", etc.)
-\renewcommand{\chaptername}{}
-\makeatother
-
-% Section and subsection: bold, indent from paragraph margin
-\makeatletter
-\renewcommand{\section}{%
-  \@startsection{section}{1}{\parindent}%
-    {3.5ex \@plus 1ex \@minus .2ex}%
-    {2.3ex \@plus .2ex}%
-    {\normalfont\bfseries}}
-\renewcommand{\subsection}{%
-  \@startsection{subsection}{2}{\parindent}%
-    {3.25ex \@plus 1ex \@minus .2ex}%
-    {1.5ex \@plus .2ex}%
-    {\normalfont\bfseries}}
-\makeatother
-
-% --------------------------------------------------------
-% Table of contents — add dots for chapters
-% --------------------------------------------------------
-\makeatletter
-\renewcommand{\l@chapter}[2]{%
-  \addpenalty{-\@highpenalty}%
-  \vskip 1.0em \@plus\p@
-  \setlength\@tempdima{1.5em}%
-  \begingroup
-    \parindent \z@ \rightskip \@pnumwidth
-    \parfillskip -\@pnumwidth
-    \leavevmode \bfseries
-    \advance\leftskip\@tempdima
-    \hskip -\leftskip
-    #1\nobreak%
-    \leaders\hbox{$\m@th\mkern 4.5mu.\mkern 4.5mu$}\hfill%
-    \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
-    \penalty\@highpenalty
-  \endgroup}
-\makeatother
-
-% --------------------------------------------------------
 % Mathematics
-% --------------------------------------------------------
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
 
-% --------------------------------------------------------
 % Graphics
-% --------------------------------------------------------
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{caption}
-\captionsetup{
-  labelsep=space,
-  font=small,
-}
 
-% --------------------------------------------------------
 % Tables
-% --------------------------------------------------------
 \usepackage{booktabs}
 \usepackage{array}
 
-% --------------------------------------------------------
-% Colors and TikZ
-% --------------------------------------------------------
+% Colors and TikZ diagrams
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, shapes.geometric, positioning, calc, fit, backgrounds}
 
-% --------------------------------------------------------
-% Listings (source code)
-% --------------------------------------------------------
+% Source code listings
 \usepackage{listings}
 \lstset{
   basicstyle=\small\ttfamily,
@@ -149,25 +39,15 @@
   tabsize=4,
 }
 
-% --------------------------------------------------------
-% Bibliography (natbib, ГОСТ-compatible)
-% --------------------------------------------------------
+% Bibliography
 \usepackage[numbers,sort&compress]{natbib}
 \bibliographystyle{unsrt}
 
-% --------------------------------------------------------
-% Hyperlinks (last, after bibliography)
-% --------------------------------------------------------
+% Hyperlinks (load last)
 \usepackage{hyperref}
 \hypersetup{
   colorlinks=true,
   linkcolor=black,
   citecolor=black,
   urlcolor=blue,
-  pdfencoding=auto,
 }
-
-% --------------------------------------------------------
-% Microtype for better text justification
-% --------------------------------------------------------
-\usepackage{microtype}

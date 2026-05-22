@@ -9,7 +9,7 @@ Master's thesis (spec. 15.04.02) on a physics solver with GPU acceleration for t
 ## Build
 
 ```bash
-make all                                      # full document → build/main.pdf
+make all                                      # full document → build/thesis.pdf
 make preview SECTION=sections/ch1/1_1_sim_tasks  # single section → build/preview.pdf
 make clean
 ```
@@ -20,8 +20,8 @@ Engine: LuaLaTeX via `latexmk`. Output goes to `build/`.
 ## Structure
 
 ```
-main.tex          — root document; uses \include{} for each chapter
-preamble.tex      — all packages and ГОСТ formatting
+thesis.tex        — root document; uses \input{} for each chapter
+preamble.tex      — packages only; formatting will be added via a separate style file
 sections/
   intro.tex       — Введение
   ch1/ch1.tex     — Глава 1 (inputs 1_1_*, 1_2_*, 1_3_*)
@@ -34,10 +34,7 @@ Each chapter file (`ch1.tex` etc.) opens with `\chapter{}` and then `\input{}`s 
 
 ## Formatting conventions
 
-- Font: PT Astra Serif 14pt (main), PT Astra Sans (sans), CMU Typewriter Text (mono)
-- Margins: left 30mm / right 15mm / top 20mm / bottom 20mm
-- Line spacing: 1.5× (`\onehalfspacing`), paragraph indent 1.25cm
-- Chapter headings: centered bold uppercase — defined in `preamble.tex`, no `titlesec`
+- GOST formatting is intentionally absent — it will be added via a separate `.sty` file
 - Citations: `\cite{}` with `natbib`; bibliography in `bibliography/refs.bib`
 - Placeholder figures: `\fbox{\parbox{0.8\textwidth}{\centering [Рисунок: описание]}}` inside a `figure` environment
 - Generated diagrams: TikZ in `figures/generated/`; include via `\input{}`
