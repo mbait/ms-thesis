@@ -12,6 +12,9 @@ chmod a=rwx "$RESDIR"
 
 cd /doc
 
+# Make G7-32.cls and related style files discoverable.
+export TEXINPUTS="/doc/G7-32/tex:${TEXINPUTS:-}"
+
 # Make ugost2008n.bst discoverable by bibtex.
 export BSTINPUTS="/doc/GOST/bibtex/bst/gost:${BSTINPUTS:-}"
 
