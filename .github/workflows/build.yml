@@ -10,8 +10,9 @@ permissions:
   packages: read    # pull from ghcr.io/mbait/*
 
 jobs:
-  build-thesis:
+  build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,80 +31,20 @@ jobs:
       - name: Fix build directory permissions
         run: sudo chmod -R a+r build/
 
-      - name: Upload thesis artifact
+      - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
-          name: thesis-pdf
+          name: thesis-pdf-${{ github.sha }}
           path: build/thesis.pdf
           retention-days: 90
 
-  build-gost:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - name: Checkout thesis
-        uses: actions/checkout@v4
-
-      - name: Checkout G7-32 class files
-        uses: actions/checkout@v4
-        with:
-          repository: latex-g7-32/G7-32
-          path: G7-32
-
-      - name: Checkout GOST bibliography styles
-        uses: actions/checkout@v4
-        with:
-          repository: kia999/GOST
-          path: GOST
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build GOST PDF
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/doc" \
-            ghcr.io/mbait/latex-g7-32:7.32-2017-dev
-
-      - name: Fix results permissions
-        run: sudo chmod -R a+r results/
-
-      - name: Upload GOST artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gost-pdfs
-          path: results/*.pdf
-          retention-days: 90
-
-  publish:
-    runs-on: ubuntu-latest
-    needs: [build-thesis, build-gost]
-    if: always() && needs.build-thesis.result == 'success'
-    steps:
-      - name: Download thesis PDF
-        uses: actions/download-artifact@v4
-        with:
-          name: thesis-pdf
-          path: release-assets/
-
-      - name: Download GOST PDFs
-        uses: actions/download-artifact@v4
-        with:
-          name: gost-pdfs
-          path: release-assets/
-        continue-on-error: true
-
-      - name: Publish to latest-build release
+      - name: Publish PDF to latest-build release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-build
           name: "Последняя сборка"
           prerelease: true
-          files: release-assets/*.pdf
+          files: build/thesis.pdf
           body: |
             Автоматическая сборка от ${{ github.run_number }}
             Ветка: `${{ github.ref_name }}`

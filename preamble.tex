@@ -1,27 +1,26 @@
-% LuaLaTeX: language and Unicode font support
-\usepackage{fontspec}
-\setmainfont{PT Astra Serif}
-\setsansfont{PT Astra Sans}
+% G7-32 already loads: fontspec, polyglossia (Russian/English), amsmath,
+% caption (GOST settings), geometry (GOST margins), titlesec, tikz,
+% multirow, etoolbox. Do not reload them here.
+
+% Monospace font (fontspec is loaded by G7-32)
 \setmonofont{Nimbus Mono PS}
-\usepackage{polyglossia}
-\setmainlanguage{russian}
-\setotherlanguage{english}
+
+% Widen right margin: G7-32 default is 10 mm, GOST 7.0.11 requires 15 mm
+\geometry{right=15mm}
 
 % Mathematics
-\usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
 
 % Graphics
 \usepackage{graphicx}
 \usepackage{float}
-\usepackage{caption}
 
 % Tables
 \usepackage{booktabs}
 \usepackage{array}
 
-% Colors and TikZ diagrams
+% TikZ (not loaded by G7-32 class itself, only by preamble.inc which we don't use)
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, shapes.geometric, positioning, calc, fit, backgrounds}
@@ -37,15 +36,6 @@
   showstringspaces=false,
   tabsize=4,
 }
-
-% Bibliography
-\usepackage[numbers,sort&compress]{natbib}
-\bibliographystyle{unsrt}
-
-% Hyphenation and justification
-% NOTE: full Russian hyphenation requires hyphen-russian in the Docker image.
-% microtype (font expansion) reduces overfull lines even without hyphenation patterns.
-\usepackage{microtype}
 
 % Hyperlinks (load last)
 \usepackage{hyperref}

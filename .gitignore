@@ -1,8 +1,5 @@
 build/
 preview.tex
-# Checked out by CI for GOST build; not committed to this repo
-G7-32/
-GOST/
 results/
 *.aux
 *.log

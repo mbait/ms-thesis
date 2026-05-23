@@ -1,5 +1,8 @@
 IMAGE  := ghcr.io/mbait/texlive-stem-docker:master
-DOCKER := docker run --rm -v $(CURDIR):/work -e BIBINPUTS=/work $(IMAGE)
+DOCKER := docker run --rm -v $(CURDIR):/work \
+          -e BIBINPUTS=/work \
+          -e TEXINPUTS=/work/G7-32/tex: \
+          $(IMAGE)
 FLAGS  := -output-directory=build -interaction=nonstopmode -halt-on-error -bibtex
 
 .PHONY: all preview clean
