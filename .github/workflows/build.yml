@@ -41,12 +41,20 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - name: Checkout latex-g7-32
+      - name: Checkout thesis
+        uses: actions/checkout@v4
+
+      - name: Checkout G7-32 class files
         uses: actions/checkout@v4
         with:
-          repository: mbait/latex-g7-32
-          ref: 7.32-2017-dev
-          submodules: recursive
+          repository: latex-g7-32/G7-32
+          path: G7-32
+
+      - name: Checkout GOST bibliography styles
+        uses: actions/checkout@v4
+        with:
+          repository: kia999/GOST
+          path: GOST
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -55,7 +63,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build GOST PDFs
+      - name: Build GOST PDF
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/doc" \

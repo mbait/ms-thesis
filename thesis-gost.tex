@@ -1,0 +1,53 @@
+\documentclass{G7-32}
+
+% --- Packages not provided by G7-32 ---
+
+% Extra math symbols (amsmath is already loaded by G7-32)
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+% Tables
+\usepackage{booktabs}
+\usepackage{array}
+
+% Colors and extra TikZ libs (tikz is already loaded by G7-32)
+\usepackage{xcolor}
+\usetikzlibrary{arrows.meta, shapes.geometric, calc, fit, backgrounds}
+
+% Source code listings
+\usepackage{listings}
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  showstringspaces=false,
+  tabsize=4,
+}
+
+% Hyperlinks (load last, after all other packages)
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
+
+% -----------------------------------------------
+
+\begin{document}
+
+\setcounter{page}{3}
+\tableofcontents
+\clearpage
+
+\input{sections/intro}
+\input{sections/ch1/ch1}
+\input{sections/ch2/ch2}
+\input{sections/ch3/ch3}
+\input{sections/ch4/ch4}
+\input{sections/ch5/ch5}
+\input{sections/conclusion}
+
+\clearpage
+\addcontentsline{toc}{chapter}{СПИСОК ИСПОЛЬЗОВАННЫХ ИСТОЧНИКОВ}
+\bibliographystyle{ugost2008n}
+\bibliography{bibliography/refs}
+
+\end{document}
