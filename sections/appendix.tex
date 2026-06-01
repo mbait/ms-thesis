@@ -1,0 +1,89 @@
+\appendix
+\chapter*{ПРИЛОЖЕНИЕ А. Ключевые фрагменты исходного кода}
+\addcontentsline{toc}{chapter}{ПРИЛОЖЕНИЕ А. Ключевые фрагменты исходного кода}
+\setcounter{section}{0}
+\renewcommand{\thesection}{А.\arabic{section}}
+
+\section{Цикл симуляции}
+
+Ниже приведён упрощённый цикл главной симуляционной петли из примера
+\texttt{stress\_test\_blocks} (1025 тел, 300 кадров).
+
+\begin{lstlisting}[language=C++, caption={Основной цикл симуляции (stress\_test\_blocks/main.cpp)}]
+for (int frame = 0; frame < n_frames; ++frame) {
+    integrate(s, bv, ip);
+    bp.build_and_query(s, bv, sv, scene_bounds);
+    uint32_t n_pairs = bp.download_count(s); // единственная синхронизация
+    bp.sort_pairs(s, n_pairs);
+    np.run(s, bp.pairs_ptr(), n_pairs, bv, sv);
+    solver.solve(s, np.contacts(), JointView{}, bv, DT);
+}
+\end{lstlisting}
+
+\section{XPBD: итерация для контактного ограничения}
+
+Ниже приведён фрагмент решателя из \texttt{core/src/xpbd\_solver.cpp},
+реализующий одну итерацию XPBD для нормального контактного ограничения.
+
+\begin{lstlisting}[language=C++, caption={XPBD: одна итерация контактного ограничения (xpbd\_solver.cpp)}]
+// Обобщённая обратная масса вдоль нормали
+float wa = gen_inv_mass(bv, ia, rax, ray, raz, nx, ny, nz);
+float wb = gen_inv_mass(bv, ib, rbx, rby, rbz, nx, ny, nz);
+
+// Приращение множителя Лагранжа (alpha = 0: жёсткий контакт)
+float dl = -(depth + alpha_h2 * lam) / (wa + wb + alpha_h2);
+
+// Проекция: lambda >= 0 (тела не прилипают)
+float lam_new = lam + dl;
+if (lam_new < 0.f) { dl = -lam; lam_new = 0.f; }
+lam = lam_new;
+
+// Коррекция позиций и скоростей
+apply_pos_impulse(bv, ia, +1.f, dl, nx, ny, nz, rax, ray, raz, inv_dt);
+apply_pos_impulse(bv, ib, -1.f, dl, nx, ny, nz, rbx, rby, rbz, inv_dt);
+\end{lstlisting}
+
+\section{Широкая фаза: код Мортона}
+
+Вычисление 30-битного кода Мортона из нормированных координат тела
+(из \texttt{core/src/broadphase.cpp}).
+
+\begin{lstlisting}[language=C++, caption={Вычисление кода Мортона (broadphase.cpp)}]
+// Нормирование в [0, 1] относительно AABB сцены
+float tx = (px[i] - sx0) / (sx1 - sx0);
+float ty = (py[i] - sy0) / (sy1 - sy0);
+float tz = (pz[i] - sz0) / (sz1 - sz0);
+
+// Квантование в 10 бит
+uint32_t qx = static_cast<uint32_t>(clamp(tx, 0.f, 1.f) * 1023.f);
+uint32_t qy = static_cast<uint32_t>(clamp(ty, 0.f, 1.f) * 1023.f);
+uint32_t qz = static_cast<uint32_t>(clamp(tz, 0.f, 1.f) * 1023.f);
+
+// Интерливинг 3x10 бит -> 30-битный код Мортона
+uint64_t key = ((uint64_t)morton3(qx, qy, qz) << 32) | (uint64_t)i;
+\end{lstlisting}
+
+\section{Python API: пример использования}
+
+\begin{lstlisting}[language=Python, caption={Python API: создание тела и шаг симуляции}]
+import dyphur_py as dy
+
+dev = dy.Device.default_cpu()
+s   = dev.make_stream()
+
+shapes = dy.ShapeStore(s, capacity=4)
+sp = dy.ShapeParams()
+sp.type = dy.ShapeType.Box
+sp.half_x = sp.half_y = sp.half_z = 0.4
+shape_id = shapes.add(sp)
+shapes.upload()
+
+bodies = dy.BodyStore(s, capacity=16)
+bp = dy.BodyParams()
+bp.mass = 1.0
+bp.position = (0.0, 2.0, 0.0)
+bp.shape_handle = shape_id
+bodies.add(bp)
+bodies.upload()
+s.wait()
+\end{lstlisting}

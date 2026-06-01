@@ -1,232 +1,176 @@
 \section{Проектирование GPU-вычислительного модуля}
 
-\subsection{Обоснование выбора Vulkan Compute}
+\subsection{Обоснование выбора SYCL/AdaptiveCpp}
 
-Для реализации GPU-ускорения физического движка были рассмотрены четыре основных технологии: CUDA, OpenCL, Metal Compute и Vulkan Compute. Выбор технологии определяется требованиями к кроссплатформенности, интеграции с существующим рендерингом и возможности использования единого GPU-устройства для симуляции и визуализации.
+Для реализации GPU-ускорения рассматривались четыре технологии:
+CUDA, OpenCL, Vulkan Compute и SYCL~2020.
 
-CUDA обеспечивает наилучшую производительность и богатейшую экосистему инструментов (Thrust, cuBLAS, cuSPARSE), однако ограничена исключительно оборудованием NVIDIA, что нарушает требование кроссплатформенности~--- один из ключевых принципов архитектуры «Модейлера».
+CUDA обеспечивает наилучшую производительность на оборудовании NVIDIA
+и предоставляет богатую экосистему инструментов (Thrust, cuBLAS).
+Однако жёсткая привязка к стеку NVIDIA нарушает требование независимости от производителя
+и исключает AMD~GPU.
 
-OpenCL является открытым стандартом с поддержкой широкого класса ускорителей, однако его развитие фактически заморожено: последняя значимая версия спецификации (OpenCL~3.0) вышла в 2020~г., и крупнейшие поставщики GPU de facto перенесли акцент на проприетарные или Vulkan-основанные решения~\cite{vulkan13spec}.
+OpenCL является открытым стандартом с широкой поддержкой ускорителей,
+однако его активная разработка фактически прекратилась:
+крупнейшие поставщики GPU de-facto перенесли фокус на иные решения,
+а синтаксис OpenCL~C отличается от современного C++, что затрудняет сопровождение кода.
 
-Metal~Compute доступен только на платформах Apple и поэтому не рассматривается.
+Vulkan Compute обеспечивает кроссплатформенность и низкие накладные расходы,
+однако требует компиляции кода ядер в промежуточный формат SPIR-V и управления
+дескриптор-сетами, командными буферами и барьерами памяти вручную~---
+значительная сложность без прямых преимуществ для вычислительных задач физики.
 
-\textbf{Vulkan Compute} выбран как основная технология GPU-ускорения. Его преимущества в контексте данной работы:
+\textbf{SYCL~2020}~\cite{sycl2020spec} --- открытый стандарт ISO/Khronos для
+однородного гетерогенного программирования на C++.
+В качестве реализации выбрана \textbf{AdaptiveCpp}~\cite{adaptivecpp2024}
+(ранее известная как hipSYCL) --- открытая реализация SYCL с бэкендами
+NVIDIA CUDA, AMD HIP и OpenMP-CPU.
+
+Преимущества AdaptiveCpp в контексте данного проекта:
 \begin{enumerate}
-  \item \textit{Интеграция с рендерингом.} VulkanSceneGraph уже инициализирует Vulkan-устройство; вычислительные конвейеры разделяют с рендерингом логическое устройство (\texttt{vk::Device}), очереди и буферную память, исключая копирование через системную шину.
-  \item \textit{Кроссплатформенность.} Vulkan поддерживается на Windows (NVIDIA, AMD, Intel), Linux и Android.
-  \item \textit{Явное управление синхронизацией.} Примитивы Vulkan (fence, semaphore, pipeline barrier) позволяют точно задать порядок исполнения между вычислительными и графическими командами.
-  \item \textit{Шейдеры в формате SPIR-V.} Единое промежуточное представление позволяет компилировать шейдеры из GLSL при сборке и распространять бинарные SPIR-V модули.
+  \item \textit{Единый исходный код.}
+    Ядро, написанное на C++20, компилируется для CUDA, HIP и CPU без изменений.
+    Выбор бэкенда задаётся флагами сборки CMake.
+  \item \textit{Современный C++.}
+    Лямбда-ядра, шаблоны, \texttt{constexpr} --- всё это доступно в GPU-коде
+    без отдельного «диалекта».
+  \item \textit{Единая модель памяти (USM).}
+    \texttt{sycl::malloc\_device<T>} выделяет память непосредственно на устройстве;
+    обмен данными CPU$\leftrightarrow$GPU выполняется явными операциями \texttt{memcpy}.
+  \item \textit{Детерминизм на уровне примитивов.}
+    AdaptiveCpp поддерживает упорядоченные редукции,
+    что позволяет гарантировать побитовую воспроизводимость.
 \end{enumerate}
 
-\subsection{Организация вычислительного конвейера}
+\subsection{Слой абстракции compute/}
 
-GPU-модуль состоит из трёх независимых вычислительных конвейеров (\textit{compute pipelines}), соответствующих трём стадиям симуляционного шага, выполняемым на GPU (рис.~\ref{fig:sim_pipeline}): широкой фазе, узкой фазе и решателю. Каждый конвейер включает один или несколько вычислительных шейдеров (GLSL compute shaders, скомпилированных в SPIR-V).
-
-Рисунок~\ref{fig:gpu_pipeline} показывает граф вычислений для одного шага симуляции.
+Прямые вызовы SYCL инкапсулированы в модуле \texttt{compute/}
+(рис.~\ref{fig:compute_arch}).
+Остальной код движка никогда не обращается к SYCL напрямую~---
+только через интерфейсы этого слоя.
 
 \begin{figure}[h]
 \centering
 \begin{tikzpicture}[
   font=\small,
-  cpubox/.style={draw, rounded corners=3pt, fill=orange!15,
-                 minimum width=5.5cm, minimum height=0.75cm, align=center},
-  gpubox/.style={draw, rounded corners=3pt, fill=blue!15,
-                 minimum width=5.5cm, minimum height=0.75cm, align=center},
-  barrierbox/.style={draw, dashed, fill=gray!10,
-                     minimum width=5.5cm, minimum height=0.5cm, align=center,
-                     font=\footnotesize\itshape},
+  box/.style={draw, rounded corners=3pt, minimum width=4.5cm,
+              minimum height=0.7cm, align=center},
+  syclbox/.style={box, fill=blue!12},
+  corebox/.style={box, fill=green!12},
   arr/.style={-{Stealth[length=5pt]}, thick},
-  label/.style={font=\footnotesize, text=gray},
 ]
+\node[corebox] (core) at (0, 0)     {\texttt{core/} (физика)};
+\node[syclbox] (comp) at (0,-1.4)   {\texttt{compute/}: Device, Buffer$\langle$T$\rangle$, parallel\_for, \ldots};
+\node[syclbox] (sycl) at (-2.2,-2.8){\texttt{AdaptiveCpp}: CUDA бэкенд};
+\node[syclbox] (hip)  at (0,-2.8)   {\texttt{AdaptiveCpp}: HIP бэкенд};
+\node[syclbox] (omp)  at (2.5,-2.8) {\texttt{AdaptiveCpp}: OpenMP CPU};
 
-% CPU side
-\node[cpubox] (cpu_prep)   at (-3.2, 0)    {CPU: обновление SSBO (SoA данные)};
-\node[cpubox] (cpu_sync)   at (-3.2,-6.6)  {CPU: чтение результатов SSBO};
-\node[cpubox] (cpu_scene)  at (-3.2,-7.7)  {CPU: обновление трансформаций VSG};
-
-% GPU side
-\node[gpubox] (broad)      at (3.2,-1.1)   {Broadphase: AABB-пары};
-\node[barrierbox] (bar1)   at (3.2,-2.0)   {pipeline barrier};
-\node[gpubox] (narrow)     at (3.2,-3.1)   {Narrowphase: GJK/EPA};
-\node[barrierbox] (bar2)   at (3.2,-4.0)   {pipeline barrier};
-\node[gpubox] (solver)     at (3.2,-5.1)   {PGS-solver ($n$ итераций)};
-\node[barrierbox] (bar3)   at (3.2,-6.0)   {pipeline barrier};
-
-% Arrows CPU->GPU and back
-\draw[arr] (cpu_prep.east)  -- ++(0.5,0) |- (broad.west)
-    node[midway, above, label] {vkCmdCopyBuffer};
-\draw[arr] (solver.south) -- ++(0,-0.2) -| (-3.2,-6.35)
-    node[midway, below, label] {fence};
-\draw[arr] (cpu_sync.south) -- (cpu_scene.north);
-
-% Arrows within GPU
-\draw[arr] (broad.south) -- (bar1.north);
-\draw[arr] (bar1.south)  -- (narrow.north);
-\draw[arr] (narrow.south)-- (bar2.north);
-\draw[arr] (bar2.south)  -- (solver.north);
-\draw[arr] (solver.south)-- (bar3.north);
-
-% Labels
-\node[label, left=0.3cm of cpu_prep]  {CPU};
-\node[label, right=0.3cm of broad]    {GPU};
-
+\draw[arr] (core.south) -- (comp.north);
+\draw[arr] (comp.south) -- ++(0,-0.3) -| (sycl.north);
+\draw[arr] (comp.south) -- (hip.north);
+\draw[arr] (comp.south) -- ++(0,-0.3) -| (omp.north);
 \end{tikzpicture}
-\caption{Граф вычислений GPU-модуля физического движка на одном шаге симуляции}
-\label{fig:gpu_pipeline}
+\caption{Архитектура слоя абстракции \texttt{compute/}}
+\label{fig:compute_arch}
 \end{figure}
 
-Все три GPU-стадии записываются в единый \texttt{VkCommandBuffer} перед отправкой. Барьеры памяти между ними задают тип доступа и стадию конвейера источника/получателя, чтобы гарантировать видимость результатов предыдущей стадии для следующей. Функция~\texttt{vkQueueSubmit} отправляет командный буфер в вычислительную очередь; CPU-поток ожидает завершения через~\texttt{VkFence}.
+Основные компоненты:
+\begin{itemize}
+  \item \texttt{Device} --- обёртка над \texttt{sycl::device};
+    методы \texttt{default\_gpu()} и \texttt{default\_cpu()} выбирают устройство автоматически.
+  \item \texttt{Buffer<T>} --- владеющий буфер в USM-памяти устройства;
+    предоставляет методы \texttt{upload()} (CPU$\to$GPU) и \texttt{download()} (GPU$\to$CPU).
+  \item \texttt{Stream} --- обёртка над \texttt{sycl::queue};
+    все операции на одном потоке выполняются в порядке постановки задач.
+  \item \texttt{parallel\_for(s,\,n,\,f)} --- запуск 1D-ядра: ядро \texttt{f} вызывается
+    для каждого индекса $i \in [0, n)$ параллельно.
+  \item \texttt{reduce\_sum}, \texttt{sort\_by\_key}, \texttt{atomic\_add} ---
+    детерминированные примитивы параллельного программирования.
+\end{itemize}
 
-\subsection{Структуры буферов данных}
-\label{sec:ssbo_layout}
+\subsection{Организация памяти}
 
-Все данные физического движка, передаваемые в GPU, размещаются в \textit{Shader Storage Buffer Objects} (SSBO)~--- буферах, доступных для чтения и записи из вычислительных шейдеров. Использование нескольких специализированных SSBO вместо одного общего упрощает управление барьерами и сокращает объём передаваемых данных.
+Все горячие данные хранятся в Structure-of-Arrays (SoA) буферах в памяти устройства.
+Такой подход обеспечивает слитный (coalesced) доступ к памяти в GPU-ядрах:
+при обработке тела $i$ все потоки вейвфронта читают одноимённые компоненты тел
+$i, i{+}1, i{+}2, \ldots$ из одного непрерывного буфера,
+что максимально использует ширину полосы памяти GPU.
 
-\textbf{BodiesSSBO} хранит состояние всех тел в SoA-формате (каждый атрибут --- отдельный массив). Размер буфера фиксируется при создании сцены на основе максимально ожидаемого числа тел $N_{\max}$. Структура буфера в GLSL:
+Структуры-«представления» (\texttt{BodyView}, \texttt{ShapeView}, \texttt{ContactView})
+содержат исключительно сырые указатели на устройстве и размер массива.
+Они тривиально копируемы и безопасны для захвата в лямбда-ядра.
+Фактическое владение буферами сосредоточено в объектах-хранилищах
+(\texttt{BodyStore}, \texttt{ShapeStore}, \texttt{ContactStore}).
 
-\begin{lstlisting}[language=C, caption={Структура основного буфера тел (GLSL)}]
-layout(std430, binding = 0) buffer BodiesSSBO {
-    vec4  positions[N_MAX];      // xyz + padding
-    vec4  orientations[N_MAX];   // кватернион xyzw
-    vec4  linear_vels[N_MAX];    // xyz + inv_mass
-    vec4  angular_vels[N_MAX];   // xyz + padding
-    mat4  inv_inertia_world[N_MAX]; // 3x3 в mat4
-    uint  flags[N_MAX];          // бит 0: static, бит 1: sleeping
-};
-\end{lstlisting}
+\subsection{Конвейер симуляционного шага}
 
-Линейная скорость и обратная масса объединены в один \texttt{vec4} (паттерн \textit{struct packing}), сокращая число обращений к памяти на~25\%.
-
-\textbf{BroadphaseSSBO} хранит оси AABB для всех тел и выходной список потенциально пересекающихся пар:
-
-\begin{lstlisting}[language=C, caption={Буфер широкой фазы (GLSL)}]
-layout(std430, binding = 1) buffer BroadphaseSSBO {
-    vec4 aabb_min[N_MAX];        // минимальная точка AABB
-    vec4 aabb_max[N_MAX];        // максимальная точка AABB
-    uint pair_count;             // атомарный счётчик пар
-    uint pairs[MAX_PAIRS * 2];   // чётные — bodyA, нечётные — bodyB
-};
-\end{lstlisting}
-
-Атомарный счётчик~\texttt{pair\_count} обновляется через~\texttt{atomicAdd} в шейдере: каждый поток, обнаруживший перекрытие AABB, атомарно резервирует слот в массиве~\texttt{pairs}.
-
-\textbf{ContactsSSBO} хранит результаты узкой фазы --- контактные точки:
-
-\begin{lstlisting}[language=C, caption={Буфер контактных точек (GLSL)}]
-struct Contact {
-    vec4  normal_depth;   // нормаль xyz + глубина w
-    vec4  point_a;        // точка контакта на теле A
-    vec4  point_b;        // точка контакта на теле B
-    uint  body_a;
-    uint  body_b;
-    uint  feature_id;     // для warm-starting
-    float lambda_n;       // нормальный импульс (накопленный)
-    vec2  lambda_t;       // тангенциальные импульсы
-    uint  _pad[2];
-};
-
-layout(std430, binding = 2) buffer ContactsSSBO {
-    uint    contact_count;
-    Contact contacts[MAX_CONTACTS];
-};
-\end{lstlisting}
-
-Поле \texttt{lambda\_n} и \texttt{lambda\_t} хранят накопленные импульсы из предыдущего шага и используются для warm-starting в начале работы решателя.
-
-\subsection{Широкая фаза на GPU}
-
-Вычислительный шейдер широкой фазы запускается с рабочей группой размером $64 \times 1 \times 1$; число групп $\lceil N^2 / 128 \rceil$ охватывает все пары тел. Шейдер выполняет наивную проверку AABB: каждый поток вычислительной группы обрабатывает одну пару $(i, j)$ с $i < j$:
-
-\begin{lstlisting}[language=C, caption={Фрагмент шейдера широкой фазы}]
-layout(local_size_x = 64) in;
-
-void main() {
-    uint pair_idx = gl_GlobalInvocationID.x;
-    // Декодировать линейный индекс пары в (i, j)
-    uint i = uint((-1.0 + sqrt(1.0 + 8.0*pair_idx)) / 2.0);
-    uint j = pair_idx - i*(i+1)/2;
-    if (i >= body_count || j >= body_count) return;
-
-    // Пропустить статические пары
-    if ((flags[i] & 1u) != 0 && (flags[j] & 1u) != 0) return;
-
-    // Проверка перекрытия AABB
-    bool overlap =
-        all(lessThan(aabb_min[i].xyz, aabb_max[j].xyz)) &&
-        all(lessThan(aabb_min[j].xyz, aabb_max[i].xyz));
-
-    if (overlap) {
-        uint slot = atomicAdd(pair_count, 1u);
-        if (slot < MAX_PAIRS) {
-            pairs[slot*2]   = i;
-            pairs[slot*2+1] = j;
-        }
-    }
-}
-\end{lstlisting}
-
-Наивный $O(N^2)$ алгоритм широкой фазы эффективен при числе тел $N \lesssim 1000$, поскольку GPU обрабатывает все пары параллельно за один запуск шейдера. При $N > 1000$ планируется переход к алгоритму, основанному на сортировке по одной из осей (\textit{Sort and Sweep}), реализованному через Vulkan-совместимый алгоритм параллельной сортировки Bitonic Sort.
-
-\subsection{Узкая фаза на GPU}
-
-Вычислительный шейдер узкой фазы обрабатывает каждую пару из~\texttt{BroadphaseSSBO} независимо: один поток --- одна пара. Реализован алгоритм GJK (описанный в разделе~2.2) в варианте, пригодном для исполнения на GPU: без рекурсии, с фиксированным числом итераций (не более 32), с выходом по достижению нулевого симплекса или предела итераций.
-
-При обнаружении столкновения (нулевое минимальное расстояние) запускается алгоритм EPA для вычисления нормали и глубины проникновения. Результат записывается в~\texttt{ContactsSSBO} через тот же~\texttt{atomicAdd}-механизм.
-
-Ключевое ограничение GPU-GJK: функция опоры для каждого примитива должна быть реализована без динамической диспетчеризации (виртуальных вызовов). Тип коллайдера закодирован полем~\texttt{uint collider\_type} в отдельном буфере, и шейдер использует~\texttt{switch}-оператор для выбора нужной функции опоры. Это типичная техника для GPU-кода, где виртуальные таблицы функций не поддерживаются.
-
-\subsection{Решатель на GPU}
-
-PGS-решатель выполняется итерационно: каждая итерация состоит из одного запуска вычислительного шейдера. Шейдер обрабатывает все контакты параллельно, применяя $\Delta\lambda$ к скоростям тел.
-
-Основная проблема параллельного PGS --- \textit{гонки данных} при записи в скорости тел: несколько потоков могут одновременно читать и обновлять скорость одного тела. Используется следующая стратегия: тела разбиваются на независимые \textit{цветовые классы} (\textit{graph coloring}) --- такие, что в каждом классе нет двух тел, связанных одним контактом. Итерация решателя выполняется поочерёдно для каждого цветового класса; внутри одного класса все контакты обрабатываются параллельно без конфликтов.
-
-Граф расцветки строится на CPU при обнаружении новых контактов и остаётся стабильным, пока топология контактов не изменяется. При типичных сценах число цветов не превышает $4$--$6$, что означает $4$--$6$ последовательных запусков шейдера на итерацию PGS~--- накладные расходы приемлемы при числе тел, достаточно большом для того, чтобы GPU-параллелизм давал выигрыш.
-
-\subsection{Синхронизация CPU и GPU}
-
-Схема синхронизации разработана с целью минимизации времени простоя как CPU, так и GPU. Используется двойная буферизация SSBO: пока GPU обрабатывает шаг $t$, CPU подготавливает данные для шага $t+1$ во втором наборе буферов. Переключение буферов происходит после завершения GPU-шага, подтверждённого~\texttt{VkFence}.
-
-Временна́я диаграмма одного кадра симуляции показана на рисунке~\ref{fig:cpu_gpu_timeline}.
+На рисунке~\ref{fig:gpu_sim_pipeline} показан порядок GPU-операций за один шаг симуляции.
+Все операции выполняются асинхронно на одном \texttt{Stream};
+единственная синхронизация CPU/GPU происходит при чтении счётчика пар (широкая фаза).
 
 \begin{figure}[h]
 \centering
-\begin{tikzpicture}[font=\small, x=1.0cm, y=0.7cm]
-  % CPU timeline
-  \draw[thick] (0,2) -- (12,2);
-  \node[left] at (0,2) {CPU};
-  \fill[orange!50] (0,1.6) rectangle (2,2.4) node[midway, font=\footnotesize] {обн. SSBO};
-  \fill[orange!50] (2.2,1.6) rectangle (3.5,2.4) node[midway, font=\footnotesize] {submit};
-  \fill[gray!20]   (3.5,1.6) rectangle (7,2.4) node[midway, font=\footnotesize] {ожидание fence};
-  \fill[green!40]  (7,1.6) rectangle (9.5,2.4) node[midway, font=\footnotesize] {чтение SSBO};
-  \fill[green!40]  (9.5,1.6) rectangle (11.5,2.4) node[midway, font=\footnotesize] {обн. VSG};
+\begin{tikzpicture}[
+  font=\small,
+  gpubox/.style={draw, rounded corners=3pt, fill=blue!13,
+                 minimum width=6.2cm, minimum height=0.7cm, align=center},
+  cpubox/.style={draw, rounded corners=3pt, fill=orange!18,
+                 minimum width=6.2cm, minimum height=0.7cm, align=center},
+  arr/.style={-{Stealth[length=5pt]}, thick},
+  note/.style={font=\footnotesize\itshape, text=gray},
+]
+\node[gpubox] (integ) at (0,0)    {Интегратор: симпл.\ Эйлер, $n_{\text{sub}}$ подшагов};
+\node[gpubox] (broad) at (0,-1.1) {Широкая фаза: Morton + LBVH (построение + обход)};
+\node[cpubox] (sync)  at (0,-2.1) {CPU: чтение числа кандидатных пар};
+\node[gpubox] (sort)  at (0,-3.2) {Сортировка пар (детерминизм)};
+\node[gpubox] (narrow)at (0,-4.3) {Узкая фаза: примитив-примитив / GJK+EPA};
+\node[gpubox] (xpbd)  at (0,-5.4) {XPBD-решатель: $n_{\text{iter}}$ итераций};
 
-  % GPU timeline
-  \draw[thick] (0,0) -- (12,0);
-  \node[left] at (0,0) {GPU};
-  \fill[gray!20]  (0,-0.4) rectangle (3.5,0.4) node[midway, font=\footnotesize] {простой};
-  \fill[blue!40]  (3.5,-0.4) rectangle (5,0.4) node[midway, font=\footnotesize] {broadphase};
-  \fill[blue!60]  (5,-0.4) rectangle (7,0.4) node[midway, font=\footnotesize] {narrowphase};
-  \fill[blue!80]  (7,-0.4) rectangle (9.2,0.4) node[midway, font=\footnotesize, text=white] {PGS solver};
-  \fill[gray!20]  (9.2,-0.4) rectangle (12,0.4) node[midway, font=\footnotesize] {простой};
+\draw[arr] (integ.south)  -- (broad.north);
+\draw[arr] (broad.south)  -- (sync.north);
+\draw[arr] (sync.south)   -- (sort.north);
+\draw[arr] (sort.south)   -- (narrow.north);
+\draw[arr] (narrow.south) -- (xpbd.north);
 
-  % Fence arrow
-  \draw[dashed, -{Stealth[length=5pt]}] (9.2,0.4) -- (7,1.6)
-    node[midway, above, sloped, font=\footnotesize] {fence signal};
-
-  % Time axis
-  \draw[->] (0,-1) -- (12,-1) node[right] {$t$};
-  \node[below] at (0,-1) {$t_0$};
-  \node[below] at (12,-1) {$t_0 + \Delta t$};
+\node[note, right=0.4cm of integ]  {GPU};
+\node[note, right=0.4cm of sync]   {CPU $\leftrightarrow$ GPU};
+\node[note, right=0.4cm of narrow] {GPU};
 \end{tikzpicture}
-\caption{Временна́я диаграмма взаимодействия CPU и GPU на одном шаге симуляции}
-\label{fig:cpu_gpu_timeline}
+\caption{Конвейер GPU-операций за один шаг симуляции}
+\label{fig:gpu_sim_pipeline}
 \end{figure}
 
-Основной источник задержки --- время ожидания CPU завершения GPU-шага. При достаточно большом числе тел время GPU-вычислений превышает время CPU-подготовки, и ожидание становится пренебрежимо малым относительно общего шага. При малом числе тел ($N \lesssim 100$) накладные расходы на запуск шейдеров и барьеры превышают выигрыш от параллелизма; в этом случае движок автоматически переключается на CPU-реализацию.
+\subsection{Обеспечение детерминизма}
 
-\subsection{Интеграция с Vulkan-устройством «Модейлера»}
+Детерминизм является обязательным требованием:
+одна и та же сцена с одними начальными условиями должна давать побитово идентичный
+результат при каждом запуске на том же оборудовании.
 
-Физический движок использует то же~\texttt{vk::Device}, что и слой рендеринга VSG, совместно с ним управляя памятью через~\texttt{vmaCreateBuffer} (Vulkan Memory Allocator). Вычислительные конвейеры создаются отдельно от графических, используя тип~\texttt{VK\_STRUCTURE\_TYPE\_COMPUTE\_PIPELINE\_CREATE\_INFO}.
+Это обеспечивается тремя мерами:
+\begin{enumerate}
+  \item \textit{Детерминированная сортировка пар.}
+    После широкой фазы кандидатные пары сортируются по каноническому ключу $(a, b)$
+    до передачи в узкую фазу.
+    Гарантирует одинаковый порядок контактов независимо от порядка обхода BVH.
+  \item \textit{Детерминированные атомарные операции.}
+    Счётчики и агрегации используют упорядоченные (детерминированные) примитивы
+    слоя \texttt{compute/}, а не встроенные атомики CUDA, результат которых
+    зависит от порядка прибытия нитей.
+  \item \textit{Фиксированное число итераций решателя.}
+    XPBD-решатель выполняет ровно $n_{\text{iter}}$ итераций
+    без критерия останова по невязке.
+    Это устраняет нестабильность числа шагов как источник недетерминизма.
+\end{enumerate}
 
-Для вычислительных команд используется отдельная вычислительная очередь (compute queue family), что позволяет GPU исполнять физику и рендеринг асинхронно при наличии аппаратной поддержки нескольких очередей. Синхронизация между рендерингом и физикой обеспечивается~\texttt{VkSemaphore}: рендеринг нового кадра начинается только после того, как физический шаг записал обновлённые трансформации в буфер, доступный вершинному шейдеру.
+В CI-матрице результат каждого PR проверяется по эталонному хешу
+(«golden trace»): любое изменение, нарушающее побитовую воспроизводимость,
+приводит к сбою сборки.
+
+\subsection{Выводы по разделу}
+
+Слой \texttt{compute/} изолирует SYCL/AdaptiveCpp от остальных компонентов движка,
+обеспечивая сменность GPU-бэкенда и упрощая тестирование на CPU.
+SoA-формат данных и однородная модель памяти USM максимизируют пропускную способность GPU.
+Детерминизм достигается на уровне проектирования~--- через сортировку данных,
+детерминированные примитивы и фиксированные итерации,~--- а не через дополнительные
+барьеры синхронизации.
