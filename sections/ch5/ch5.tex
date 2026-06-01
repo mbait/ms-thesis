@@ -70,12 +70,15 @@
 и имитация 300 кадров с шагом $\Delta t = 1/60$\,с
 (рис.~\ref{fig:stress_test}).
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
-\fbox{\parbox{0.6\textwidth}{\centering
-[Рисунок: визуализация финального кадра stress\_test\_blocks;\\
-стопка кубов, частично осыпавшаяся на платформу]}}
-\caption{Визуализация сцены \textit{stress\_test\_blocks} (инструмент \texttt{tools/viz/})}
+\begin{tabular}{ccc}
+  \includegraphics[width=0.30\textwidth]{figures/images/stress-test_start.png} &
+  \includegraphics[width=0.30\textwidth]{figures/images/stress-test_fall.png}  &
+  \includegraphics[width=0.30\textwidth]{figures/images/stress-test_settle.png} \\
+  а) начальное состояние & б) падение башни & в) конечное состояние \\
+\end{tabular}
+\caption{Визуализация сцены \textit{stress\_test\_blocks}: 1024 куба над статической платформой}
 \label{fig:stress_test}
 \end{figure}
 
