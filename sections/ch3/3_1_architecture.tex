@@ -35,7 +35,7 @@
 ]
 
 % Layers (bottom to top)
-\node[layer, fill=blue!10]   (gpu)     at (0,0)   {GPU-ускоренный физический движок\\{\footnotesize Vulkan Compute, SSBO, вычислительные шейдеры}};
+\node[layer, fill=blue!10]   (gpu)     at (0,0)   {GPU-ускоренный физический движок dyphur\\{\footnotesize SYCL~2020 / AdaptiveCpp, USM-буферы, CUDA · HIP · OpenMP}};
 \node[layer, fill=green!10]  (scene)   at (0,1.5) {Слой сцены и рендеринга\\{\footnotesize VulkanSceneGraph v1.1.14, vsgXchange, urdfdom}};
 \node[layer, fill=yellow!10] (core)    at (0,3.0) {Программное ядро (C~ABI)\\{\footnotesize modeuler.h, управление сценой, Vulkan-устройство}};
 \node[layer, fill=orange!10] (ui_win)  at (-2.75,4.5) {WPF / .NET~10\\{\footnotesize Windows}};
