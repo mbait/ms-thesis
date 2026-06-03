@@ -85,32 +85,7 @@
 
 Программный интерфейс ядра спроектирован по принципу минимальной поверхности: пользовательский код работает только с непрозрачными дескрипторами и узким набором функций. Это позволяет изменять внутреннюю реализацию без нарушения обратной совместимости.
 
-\begin{lstlisting}[language=C, caption={Ключевые функции публичного C-интерфейса «Модейлера»}]
-/* Инициализация и завершение работы */
-modeuler_result_t modeuler_init(void);
-void              modeuler_deinit(void);
-
-/* Управление сценой */
-modeuler_scene_t  modeuler_scene_create(void);
-void              modeuler_scene_destroy(modeuler_scene_t scene);
-
-/* Загрузка модели и создание физических тел */
-modeuler_model_t  modeuler_model_import(modeuler_scene_t scene,
-                                        const char *urdf_path);
-
-/* Управление окном отображения */
-modeuler_window_t modeuler_window_attach_native(
-                      modeuler_scene_t scene,
-                      void *native_handle,
-                      modeuler_native_type_t type);
-
-/* Шаг симуляции */
-modeuler_result_t modeuler_physics_step(modeuler_scene_t scene,
-                                        double dt);
-
-/* Рендеринг кадра */
-modeuler_result_t modeuler_run_frame(modeuler_window_t window);
-\end{lstlisting}
+Публичный C ABI включает функции четырёх групп: инициализация и завершение работы; управление сценой (создание, загрузка URDF-модели); управление окном отображения; шаг симуляции и рендеринг кадра. Пользовательский код работает с непрозрачными дескрипторами сцены и окна, не имея доступа к внутренним структурам данных.
 
 Функция \texttt{modeuler\_physics\_step} вызывается управляющим циклом приложения с фиксированным шагом~$\Delta t$ (типично 1--2\,мс для реального времени). Результаты шага симуляции (обновлённые трансформации тел) немедленно применяются к VSG-узлам, после чего вызов~\texttt{modeuler\_run\_frame} генерирует новый кадр изображения.
 

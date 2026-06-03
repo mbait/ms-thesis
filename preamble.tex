@@ -28,16 +28,23 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, shapes.geometric, positioning, calc, fit, backgrounds}
 
-% Source code listings
+% Listings (pseudocode only; no syntax highlighting)
 \usepackage{listings}
 \lstset{
   basicstyle=\small\ttfamily,
   breaklines=true,
   frame=single,
-  numbers=left,
-  numberstyle=\tiny,
+  numbers=none,
   showstringspaces=false,
-  tabsize=4,
+}
+\lstdefinestyle{pseudocode}{
+  language={},
+  basicstyle=\small\rmfamily,
+  keywordstyle=\bfseries,
+  frame=single,
+  numbers=none,
+  breaklines=true,
+  mathescape=true,
 }
 
 % Remove mandatory page break before each \chapter

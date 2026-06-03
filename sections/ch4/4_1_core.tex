@@ -131,14 +131,24 @@ GJK и EPA реализованы с фиксированными массива
 
 Решатель реализует последовательный Гаусс--Зейдель (Sequential Gauss--Seidel) по уравнениям
 раздела~2.4.
-Основная схема итерации для контактного ограничения (фрагмент приведён в приложении~А):
+Алгоритм~\ref{alg:xpbd} описывает один шаг решателя для набора контактов и сочленений.
 
-\begin{enumerate}
-  \item Вычислить обобщённую обратную массу $w$ по уравнению~\eqref{eq:gen-inv-mass}.
-  \item Вычислить приращение $\Delta\lambda$ по уравнению~\eqref{eq:xpbd-delta-lambda}.
-  \item Применить проекцию: $\lambda \leftarrow \max(\lambda + \Delta\lambda,\; 0)$.
-  \item Обновить позиции и ориентации тел~\eqref{eq:xpbd-xa}--\eqref{eq:xpbd-xb}.
-\end{enumerate}
+\begin{lstlisting}[style=pseudocode,
+  caption={Один шаг XPBD-решателя},
+  label={alg:xpbd}]
+Вход: контакты C, сочленения J, тела B, шаг h, число итераций $n$
+  обнулить $\lambda_c \leftarrow 0$ для каждого контакта
+  для $k = 1 \ldots n$:
+    для каждого контакта $c \in C$ с глубиной $d$, нормалью $\hat{n}$:
+      $w \leftarrow w_A(\hat{n}) + w_B(\hat{n})$   // обобщ. обратная масса
+      $\Delta\lambda \leftarrow -(d + \tilde{\alpha}\,\lambda_c)\;/\;(w + \tilde{\alpha})$
+      $\lambda_c \leftarrow \max(\lambda_c + \Delta\lambda,\;0)$  // $\lambda \geq 0$
+      скорректировать позицию и ориентацию тел A и B
+    для каждого сочленения $j \in J$:
+      применить позиционные и угловые ограничения типа $j$
+      применить PD-мотор и упоры (если задан тип Revolute/Prismatic)
+  обновить скорости: $\mathbf{v} \leftarrow (\mathbf{x} - \mathbf{x}_{\mathrm{prev}})/h$
+\end{lstlisting}
 
 Для сочленений типа \textit{Fixed} и \textit{Ball} применяются
 позиционные ограничения (шаги~1--4 без проекции).
