@@ -47,11 +47,6 @@
   mathescape=true,
 }
 
-% Remove mandatory page break before each \chapter
-\makeatletter
-\patchcmd{\chapter}{\clearpage}{}{}{}
-\makeatother
-
 % Hyperlinks (load last)
 \usepackage{hyperref}
 \hypersetup{
