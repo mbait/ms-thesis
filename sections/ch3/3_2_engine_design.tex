@@ -9,7 +9,7 @@
 \centering
 \caption{Атрибуты состояния твёрдого тела}
 \label{tab:rigidbody_state}
-\begin{tabular}{lll}
+\begin{tabular}{llp{5.5cm}}
 \toprule
 \textbf{Атрибут} & \textbf{Тип} & \textbf{Описание} \\
 \midrule
@@ -20,7 +20,7 @@
 \texttt{inv\_mass}     & $\mathbb{R}$            & Обратная масса ($0$ для статических тел) \\
 \texttt{inv\_inertia}  & $\mathbb{R}^{3\times3}$ & Обратный тензор инерции (система тела) \\
 \texttt{shape\_handle} & \texttt{uint32}         & Индекс формы в каталоге форм \\
-\texttt{flags}         & \texttt{uint32}         & Признаки: Static / Kinematic / Sleeping \\
+\texttt{flags}         & \texttt{uint32}         & Признаки: Static, Kinematic, Sleeping \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -46,9 +46,11 @@
 структура из сырых указателей на устройстве и счётчика активных тел,
 тривиально копируемая в лямбда-ядра.
 
-Аналогичная пара (Store / View) используется для форм (\texttt{ShapeStore}/\texttt{ShapeView}),
-контактов (\texttt{ContactStore}/\texttt{ContactView})
-и сочленений (\texttt{JointStore}/\texttt{JointView}).
+Аналогичная пара (Store\,/\,View) применяется для форм,
+контактов и сочленений:
+\texttt{ShapeStore}/\allowbreak\texttt{ShapeView},
+\texttt{ContactStore}/\allowbreak\texttt{ContactView},
+\texttt{JointStore}/\allowbreak\texttt{JointView}.
 
 \subsection{Каталог форм тел}
 
@@ -75,8 +77,8 @@
 
 \subsection{Сочленения}
 
-Сочленения описываются структурой \texttt{JointParams}
-и хранятся в \texttt{JointStore} в SoA-формате.
+Сочленения описываются структурой \texttt{Joint\-Params}
+и хранятся в \texttt{Joint\-Store} в SoA-формате.
 Поддерживаемые типы сочленений и их степени свободы представлены
 в таблице~\ref{tab:joint_types}.
 
@@ -102,7 +104,7 @@
 
 \subsection{Интерфейс решателя}
 
-Решатель ограничений вынесен за абстрактный интерфейс \texttt{IConstraintSolver},
+Решатель ограничений вынесен за абстрактный интерфейс \texttt{IConstraint\-Solver},
 единственный метод которого принимает представления контактов, сочленений и тел,
 а также шаг по времени.
 Такое разделение позволяет заменить реализацию решателя без изменения остальных компонентов движка.

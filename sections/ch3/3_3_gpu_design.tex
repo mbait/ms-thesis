@@ -77,7 +77,7 @@ NVIDIA CUDA, AMD HIP и OpenMP-CPU.
 Основные компоненты:
 \begin{itemize}
   \item \texttt{Device} --- обёртка над \texttt{sycl::device};
-    методы \texttt{default\_gpu()} и \texttt{default\_cpu()} выбирают устройство автоматически.
+    выбор устройства через \texttt{default\_gpu()} и \texttt{default\_cpu()}.
   \item \texttt{Buffer<T>} --- владеющий буфер в USM-памяти устройства;
     предоставляет методы \texttt{upload()} (CPU$\to$GPU) и \texttt{download()} (GPU$\to$CPU).
   \item \texttt{Stream} --- обёртка над \texttt{sycl::queue};

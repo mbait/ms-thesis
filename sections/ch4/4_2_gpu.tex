@@ -9,9 +9,9 @@
 Основные компоненты слоя:
 
 \paragraph{\texttt{Device}.}
-Представляет вычислительное устройство. Статические методы
-\texttt{default\_gpu()} и \texttt{default\_cpu()} автоматически выбирают устройство.
-Через \texttt{Device} создаётся \texttt{Stream}.
+Представляет вычислительное устройство.
+Устройство выбирается статическими методами \texttt{default\_gpu()} и \texttt{default\_cpu()};
+через него создаётся \texttt{Stream}.
 
 \paragraph{\texttt{Stream}.}
 Обёртка над \texttt{sycl::queue} в режиме \textit{in-order}.
@@ -19,10 +19,9 @@
 Метод \texttt{wait()} блокирует CPU до завершения всех поставленных задач.
 
 \paragraph{\texttt{Buffer<T>}.}
-Буфер в USM-памяти устройства (\texttt{sycl::malloc\_device}).
-Предоставляет методы \texttt{upload(host\_ptr)} (CPU$\to$GPU, асинхронный)
-и \texttt{download(host\_ptr)} (GPU$\to$CPU, блокирующий).
-Уничтожение буфера освобождает память через \texttt{sycl::free}.
+Буфер в USM-памяти устройства.
+Предоставляет методы \texttt{upload} и \texttt{download} для асинхронной передачи
+данных CPU$\leftrightarrow$GPU; при уничтожении буфера память освобождается автоматически.
 
 \paragraph{\texttt{parallel\_for(s, n, f)}.}
 Запускает GPU-ядро: лямбда \texttt{f(size\_t i)} вызывается
