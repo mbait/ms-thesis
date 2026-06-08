@@ -54,6 +54,12 @@
 % Prevent Latin technical terms from overflowing the line
 \usepackage{microtype}
 
+% With \nobreakingbeforechapters the G7-32 \chapter drops its \clearpage,
+% but \clearpage was also closing the previous paragraph. Without it, a
+% chapter that follows body text mid-page is typeset inline. Force a \par
+% before every chapter heading (a no-op when already in vertical mode).
+\pretocmd{\chapter}{\par}{}{}
+
 % Hyperlinks (load last)
 \usepackage{hyperref}
 \hypersetup{
