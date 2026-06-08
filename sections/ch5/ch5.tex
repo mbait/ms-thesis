@@ -31,8 +31,8 @@
 \midrule
 \texttt{ci-linux-cuda}    & NVIDIA CUDA  & smoke, determinism \\
 \texttt{ci-linux-hip}     & AMD HIP      & smoke \\
-\texttt{ci-linux-cpu}     & OpenMP CPU   & smoke + ASAN/UBSan/TSan \\
-\texttt{ci-determinism}   & OpenMP CPU   & determinism (Release) \\
+\texttt{ci-linux-cpu}     & OpenMP (ЦП)   & smoke + ASAN/UBSan/TSan \\
+\texttt{ci-determinism}   & OpenMP (ЦП)   & determinism (Release) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -103,7 +103,7 @@ $\Delta t = 1/60$\,с (рис.~\ref{fig:stress_test}). Проверяется ч
 \end{table}
 {\footnotesize ${}^\ast$ Тест проверяет run-to-run воспроизводимость, фиксированного хеша нет: сцена задействует раскрашенный решатель и deep-BVH.}
 
-Различие хешей между CUDA и CPU обусловлено особенностями арифметики с плавающей точкой (ассоциативность, FTZ 
+Различие хешей между CUDA и OpenMP-бэкендом обусловлено особенностями арифметики с плавающей точкой (ассоциативность, FTZ 
 на графическом процессоре), а не ошибкой.
 
 \subsection{Тест манипулятора}

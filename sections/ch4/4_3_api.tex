@@ -23,7 +23,7 @@
 
 Модуль \texttt{dyphur\_py} предоставляет Python-интерфейс к основным компонентам движка через библиотеку 
 \textbf{nanobind}. Nanobind обеспечивает нулевое копирование данных при работе с массивами numpy: устройство 
-предоставляет указатель через интерфейс DLPack/CUDA Array Interface, не перенося данные на CPU.
+предоставляет указатель через интерфейс DLPack/CUDA Array Interface, не перенося данные на центральный процессор.
 
 Контактный сенсор (\texttt{ContactSensor}) реализован как отдельный компонент с подпиской на контактные 
 события по идентификаторам тел. Тест \texttt{test\_contact\_sensor.py} верифицирует его работу: 1024 кубов 
@@ -60,7 +60,7 @@ spdlog, fmt, pugixml, nanobind) управляются через \textbf{vcpkg}
   \item \texttt{dev}~--- Debug-сборка с CUDA, конфигурация для clangd (IDE);
   \item \texttt{ci-linux-cuda}~--- полный CI на NVIDIA;
   \item \texttt{ci-linux-hip}~--- полный CI на AMD;
-  \item \texttt{ci-linux-cpu}~--- CPU-путь с матрицей ASAN/UBSan/TSan;
+  \item \texttt{ci-linux-cpu}~--- бэкенд центрального процессора с матрицей ASAN/UBSan/TSan;
   \item \texttt{ci-determinism}~--- только Release + golden trace.
 \end{itemize}
 
