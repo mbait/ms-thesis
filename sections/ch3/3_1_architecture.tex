@@ -32,10 +32,11 @@ Description Format — стандартный XML-формат, использу
 \centering
 \begin{tikzpicture}[
   font=\small,
+  % layer: width=7cm, height=1.1cm  → half-height=0.55
   layer/.style={
     draw, rounded corners=4pt,
-    minimum width=7.5cm, minimum height=1.1cm,
-    align=center, text width=7cm
+    minimum width=7cm, minimum height=1.1cm,
+    align=center, text width=6.7cm
   },
   extlib/.style={
     draw, rounded corners=4pt, dashed,
@@ -47,29 +48,51 @@ Description Format — стандартный XML-формат, использу
   extarr/.style={-{Stealth[length=6pt]}, thick, dashed},
 ]
 
-% Модейлер layers
+% ── Узлы ─────────────────────────────────────────────────────────────────────
+% scene : center (0, 2.0)  → east=3.5  north=2.55  south=1.45
+% core  : center (0, 3.5)  → east=3.5  north=4.05  south=2.95
+% dyphur: center (5.8,2.7) → west=3.8  north=3.25  south=2.15
+% ui_win: center (-3.0,5.2)→ right=-0.5 south=4.65   width=5cm
+% ui_gtk: center ( 2.8,5.2)→ left=0.8  south=4.65   width=4cm
+%
+% Зазоры: scene–core 0.40cm; scene.east–dyphur.west 0.30cm
+%         ui_win.right–ui_gtk.left 1.30cm
+%         core.north–ui.south 0.60cm  (стрелки идут при y=4.35, ниже ui.south=4.65)
+
+\node[layer, fill=green!10]  (scene)  at (0,2.0)
+    {Слой сцены и рендеринга\\{\footnotesize VulkanSceneGraph, vsgXchange, urdfdom}};
+\node[layer, fill=yellow!10] (core)   at (0,3.5)
+    {Программное ядро (C~ABI)\\{\footnotesize modeuler.h, Vulkan-устройство, VSG}};
 \node[layer, fill=orange!10, minimum width=5cm, text width=4.7cm]
-                             (ui_win) at (-3.0,5.2) {WPF / .NET~10 (Windows)};
+    (ui_win) at (-3.0,5.2) {WPF / .NET~10 (Windows)};
 \node[layer, fill=orange!10, minimum width=4cm, text width=3.7cm]
-                             (ui_gtk) at (2.5,5.2)  {GTK~4 / C (Linux)};
-\node[layer, fill=yellow!10] (core)   at (0,3.7)   {Программное ядро (C~ABI)\\{\footnotesize modeuler.h, Vulkan-устройство, VSG}};
-\node[layer, fill=green!10]  (scene)  at (0,2.3)   {Слой сцены и рендеринга\\{\footnotesize VulkanSceneGraph, vsgXchange, urdfdom}};
+    (ui_gtk) at (2.8,5.2)  {GTK~4 / C (Linux)};
 
-% dyphur — внешняя библиотека
-\node[extlib]                (dyphur) at (5.5,2.3)  {dyphur\\{\footnotesize SYCL~2020 / AdaptiveCpp\\CUDA · HIP · OpenMP}};
+% dyphur — внешняя библиотека, левый край (3.8) правее scene.east (3.5)
+\node[extlib] (dyphur) at (5.8,2.7)
+    {dyphur\\{\footnotesize SYCL~2020 / AdaptiveCpp\\CUDA · HIP · OpenMP}};
 
-% Стрелки внутри Модейлера
+% ── Стрелки внутри Модейлера ──────────────────────────────────────────────────
 \draw[arr] (scene.north) -- (core.south);
-\draw[arr] (core.north) -- ++(0,0.85) -| (ui_win.south);
-\draw[arr] (core.north) -- ++(0,0.85) -| (ui_gtk.south);
 
-% Стрелка к dyphur (двунаправленная: вызов + возврат трансформаций)
-\draw[extarr] (core.east) -- ++(0.45,0) |- (dyphur.north)
+% Промежуточная точка y=4.05+0.30=4.35 — ниже ui.south=4.65, выше core.north=4.05
+% Финальный вертикальный отрезок: 4.65−4.35=0.30 cm (arrowhead ↑)
+\draw[arr] (core.north) -- ++(0,0.30) -| (ui_win.south);
+\draw[arr] (core.north) -- ++(0,0.30) -| (ui_gtk.south);
+
+% ── Стрелки к/от dyphur ───────────────────────────────────────────────────────
+% C++ API: core.east(3.5,3.5)→(3.95,3.5)→-|(5.8,3.25)
+% Горизонтальный отрезок при y=3.5 — выше dyphur.north(3.25) ✓
+% Вертикальный отрезок при x=5.8: arrowhead ↓ в dyphur.north
+\draw[extarr] (core.east) -- ++(0.45,0) -| (dyphur.north)
     node[midway, above, font=\footnotesize] {C++ API};
-\draw[extarr] (dyphur.south) -- ++(0,-0.4) -| ++(-0.45,0) |- (scene.east)
-    node[pos=0.6, right, font=\footnotesize] {трансформации};
 
-% Подписи
+% Трансформации: dyphur.south(5.8,2.15)→(5.8,1.65)→(4.0,1.65)→(4.0,2.0)→scene.east(3.5,2.0)
+% Весь путь — ниже dyphur.south(2.15) и правее scene.east(3.5) ✓
+\draw[extarr] (dyphur.south) -- ++(0,-0.5) -- ++(-1.8,0) |- (scene.east)
+    node[pos=0.55, above, font=\footnotesize] {трансформации};
+
+% ── Подписи ───────────────────────────────────────────────────────────────────
 \node[grouplabel, left=0.2cm of scene]  {§\,3.1.3};
 \node[grouplabel, right=0.3cm of dyphur, yshift=8pt] {гл.\,4};
 
