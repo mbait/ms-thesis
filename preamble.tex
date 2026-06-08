@@ -45,8 +45,10 @@
   keywordstyle=\bfseries,
   frame=single,
   numbers=none,
-  breaklines=true,
-  mathescape=true,
+  breaklines=false,      % lines are pre-wrapped by hand; auto-break miscomputes
+  mathescape=true,       % width with a proportional font and breaks lines early
+  columns=fullflexible,  % proportional font: let glyphs use natural widths
+  keepspaces=true,       % do not collapse the spaces between words
 }
 
 % Prevent Latin technical terms from overflowing the line

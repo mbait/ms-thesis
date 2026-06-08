@@ -141,25 +141,35 @@ GJK и EPA реализованы с фиксированными массива
 Раскраска вычисляется жадным однопроходным алгоритмом в начале каждого кадра. Статические и кинематические 
 тела ($m^{-1} = 0$) не включаются в граф: их поправки нулевые, поэтому они никогда не конфликтуют.
 
-Алгоритм~\ref{alg:xpbd} описывает один шаг с параллельным выполнением по цветам.
+Листинг~\ref{alg:xpbd} описывает один шаг с параллельным выполнением по цветам.
 
-\begin{lstlisting}[style=pseudocode, float=t,
-  caption={Один шаг XPBD-решателя с раскраской графа},
-  label={alg:xpbd}]
-Вход: контакты C, сочленения J, тела B, шаг h, $n$ итераций
-  раскрасить C $\cup$ J $\to$ цвета $\{K_1, K_2, \ldots\}$
-  обнулить $\lambda_c \leftarrow 0$ для каждого контакта
-  для $k = 1 \ldots n$:
-    для каждого цвета $K_i$ (по порядку):
-      // параллельно по ограничениям $K_i$:
-      для каждого $c \in K_i$:
-        $w \leftarrow w_A(\hat{n}) + w_B(\hat{n})$
-        $\Delta\lambda \leftarrow -(d + \tilde{\alpha}\,\lambda_c)\;/\;(w + \tilde{\alpha})$
-        $\lambda_c \leftarrow \max(\lambda_c + \Delta\lambda,\;0)$
-        скорректировать позиции и ориентации тел A и B
-  нормализовать кватернионы (параллельно по телам)
-  обновить скорости: $\mathbf{v} \leftarrow (\mathbf{x} - \mathbf{x}_{\mathrm{prev}})/h$
-\end{lstlisting}
+\par\medskip
+\noindent\begin{minipage}{\linewidth}
+\captionof{lstlisting}{Один шаг XPBD-решателя с раскраской графа}%
+\label{alg:xpbd}
+\par\smallskip
+\setlength{\fboxsep}{8pt}%
+\noindent\fbox{%
+\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+\small\setlength{\parindent}{0pt}\raggedright
+\newcommand{\pind}[1]{\hspace*{#1\dimexpr1.6em\relax}}%
+\pind0 Вход: контакты $C$, сочленения $J$, тела $B$, шаг $h$, число итераций $n$\\
+\pind0 раскрасить $C \cup J \to$ цвета $\{K_1, K_2, \ldots\}$\\
+\pind0 обнулить $\lambda_c \leftarrow 0$ для каждого контакта\\
+\pind0 для $k = 1 \ldots n$:\\
+\pind1 для каждого цвета $K_i$ по порядку:\\
+\pind2 \textit{// параллельно по ограничениям $K_i$}\\
+\pind2 для каждого $c \in K_i$:\\
+\pind3 $w \leftarrow w_A(\hat{n}) + w_B(\hat{n})$\\
+\pind3 $\Delta\lambda \leftarrow -(d + \tilde{\alpha}\,\lambda_c)\,/\,(w + \tilde{\alpha})$\\
+\pind3 $\lambda_c \leftarrow \max(\lambda_c + \Delta\lambda,\,0)$\\
+\pind3 скорректировать позиции и ориентации тел $A$ и $B$\\
+\pind0 нормализовать кватернионы по всем телам\\
+\pind0 обновить скорости: $\mathbf{v} \leftarrow (\mathbf{x} - \mathbf{x}_{\mathrm{prev}})/h$
+\end{minipage}}
+\end{minipage}
+
+\medskip
 
 Кватернионы нормализуются отдельным ядром после всех итераций. По завершении всех итераций скорости тел 
 обновляются в соответствии с уравнением~\eqref{eq:vel-update}.
