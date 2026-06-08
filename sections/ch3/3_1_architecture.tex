@@ -50,14 +50,15 @@ Description Format — стандартный XML-формат, использу
 ]
 
 % ── Координаты ──────────────────────────────────────────────────────────────
-% scene : (0, 2.0)  east=3.25, y∈[1.45, 2.55]
-% core  : (0, 3.5)  east=3.25, north=4.05
-% dyphur: (7.2,2.75) west=4.70, y∈[1.35, 4.15]  (перекрывает оба слоя по высоте)
-% ui_win: (-3.0,5.2) width=5cm  → right=−0.5
-% ui_gtk: ( 2.5,5.2) width=4cm  → left=0.5   gap=1.0cm
-% Зазор scene.east–dyphur.west: 4.70−3.25=1.45cm (место для стрелок и подписей)
+% scene : (0, 1.3)  east=3.25, north=1.85, south=0.75
+% core  : (0, 3.5)  east=3.25, north=4.05, south=2.95
+% Стрелка scene→core: 2.95−1.85=1.10cm ✓
+% dyphur: (7.5, 2.4) west=5.0, y∈[0.9, 3.9]  (охватывает scene+core по высоте)
+% Зазор scene.east–dyphur.west: 5.0−3.25=1.75cm (место для подписей стрелок)
+% ui_win: (-3.0,5.2) width=5cm → right=−0.5
+% ui_gtk: ( 2.5,5.2) width=4cm → left=0.5   gap=1.0cm
 
-\node[layer, fill=green!10]  (scene)  at (0,2.0)
+\node[layer, fill=green!10]  (scene)  at (0,1.3)
     {Слой сцены и рендеринга\\{\footnotesize VulkanSceneGraph, vsgXchange, urdfdom}};
 \node[layer, fill=yellow!10] (core)   at (0,3.5)
     {Программное ядро (C~ABI)\\{\footnotesize modeuler.h, Vulkan-устройство, VSG}};
@@ -66,8 +67,9 @@ Description Format — стандартный XML-формат, использу
 \node[layer, fill=orange!10, minimum width=4cm, text width=3.7cm]
     (ui_gtk) at (2.5,5.2)  {GTK~4 / C (Linux)};
 
-% dyphur справа: высокий блок, охватывает оба слоя
-\node[extlib] (dyphur) at (7.2,2.75)
+% dyphur: высокий блок, покрывает оба слоя; смещён правее для зазора
+% minimum height=3.2cm охватывает от scene.south(0.75) до core.north(4.05)
+\node[extlib, minimum height=3.2cm] (dyphur) at (7.5,2.4)
     {dyphur\\[6pt]
      {\footnotesize SYCL~2020 / AdaptiveCpp}\\[2pt]
      {\footnotesize CUDA · HIP · OpenMP (ЦП)}};
@@ -87,7 +89,7 @@ Description Format — стандартный XML-формат, использу
 
 % ── Подписи ──────────────────────────────────────────────────────────────────
 \node[grouplabel, left=0.2cm of scene]  {§\,3.1.3};
-\node[grouplabel, right=0.3cm of dyphur] {гл.\,4};
+\node[grouplabel, above=0.15cm of dyphur] {гл.\,4};
 
 \end{tikzpicture}
 \caption{Архитектура «Модейлера» и место библиотеки dyphur}
