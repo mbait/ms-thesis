@@ -101,9 +101,17 @@ Description Format — стандартный XML-формат, использу
 \label{fig:modeuler_architecture}
 \end{figure}
 
-\textbf{Уровень пользовательского интерфейса} реализован в виде двух независимых приложения. Приложение для 
-Windows построено на основе .NET~10 с использованием WPF, Fluent.Ribbon и AvalonDock. Приложение для Linux 
+\textbf{Уровень пользовательского интерфейса} реализован в виде двух независимых приложений. Приложение для
+Windows построено на основе .NET~10 с использованием WPF, Fluent.Ribbon и AvalonDock. Приложение для Linux
 реализовано на~C с использованием GTK~4. Оба варианта взаимодействуют с ядром исключительно через C~ABI.
+Внешний вид интерфейса показан на рисунке~\ref{fig:modeuler_ui}.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/images/modeuler-ui.jpg}
+\caption{Интерфейс пользователя программного комплекса «Модейлер»}
+\label{fig:modeuler_ui}
+\end{figure}
 
 \textbf{Уровень программного ядра} предоставляет стабильный интерфейс через заголовочный 
 файл~\texttt{modeuler.h} (C-совместимый). Внутри ядра располагается менеджер Vulkan-устройства~--- 
