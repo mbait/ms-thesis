@@ -48,9 +48,10 @@ Description Format — стандартный XML-формат, использу
 ]
 
 % Модейлер layers
-\node[layer, fill=orange!10] (ui_win) at (-1.8,5.2) {WPF / .NET~10 (Windows)};
-\node[layer, fill=orange!10, minimum width=3.5cm, text width=3.2cm]
-                             (ui_gtk) at (3.3,5.2)  {GTK~4 / C (Linux)};
+\node[layer, fill=orange!10, minimum width=5cm, text width=4.7cm]
+                             (ui_win) at (-3.0,5.2) {WPF / .NET~10 (Windows)};
+\node[layer, fill=orange!10, minimum width=4cm, text width=3.7cm]
+                             (ui_gtk) at (2.5,5.2)  {GTK~4 / C (Linux)};
 \node[layer, fill=yellow!10] (core)   at (0,3.7)   {Программное ядро (C~ABI)\\{\footnotesize modeuler.h, Vulkan-устройство, VSG}};
 \node[layer, fill=green!10]  (scene)  at (0,2.3)   {Слой сцены и рендеринга\\{\footnotesize VulkanSceneGraph, vsgXchange, urdfdom}};
 
@@ -59,8 +60,8 @@ Description Format — стандартный XML-формат, использу
 
 % Стрелки внутри Модейлера
 \draw[arr] (scene.north) -- (core.south);
-\draw[arr] (core.north) -- ++(0,0.45) -| (ui_win.south);
-\draw[arr] (core.north) -- ++(0,0.45) -| (ui_gtk.south);
+\draw[arr] (core.north) -- ++(0,0.85) -| (ui_win.south);
+\draw[arr] (core.north) -- ++(0,0.85) -| (ui_gtk.south);
 
 % Стрелка к dyphur (двунаправленная: вызов + возврат трансформаций)
 \draw[extarr] (core.east) -- ++(0.45,0) |- (dyphur.north)

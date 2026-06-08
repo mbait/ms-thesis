@@ -55,9 +55,9 @@ Vulkan Compute обеспечивает кроссплатформенность
 ]
 \node[corebox] (core) at (0, 0)     {\texttt{core/} (физика)};
 \node[syclbox] (comp) at (0,-1.4)   {\texttt{compute/}: Device, Buffer$\langle$T$\rangle$, parallel\_for, \ldots};
-\node[syclbox] (sycl) at (-2.2,-2.8){\texttt{AdaptiveCpp}: CUDA бэкенд};
-\node[syclbox] (hip)  at (0,-2.8)   {\texttt{AdaptiveCpp}: HIP бэкенд};
-\node[syclbox] (omp)  at (2.5,-2.8) {\texttt{AdaptiveCpp}: OpenMP};
+\node[syclbox, minimum width=3.5cm] (sycl) at (-4.0,-2.8){CUDA};
+\node[syclbox, minimum width=3.5cm] (hip)  at (0,-2.8)   {HIP};
+\node[syclbox, minimum width=3.5cm] (omp)  at (4.0,-2.8) {OpenMP (ЦП)};
 
 \draw[arr] (core.south) -- (comp.north);
 \draw[arr] (comp.south) -- ++(0,-0.3) -| (sycl.north);
