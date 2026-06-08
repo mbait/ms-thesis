@@ -19,7 +19,8 @@ Vulkan Compute обеспечивает кроссплатформенность
 
 \textbf{SYCL~2020}~\cite{sycl2020spec} --- открытый стандарт ISO/Khronos для однородного гетерогенного 
 программирования на C++. В качестве реализации выбрана \textbf{AdaptiveCpp}~\cite{adaptivecpp2024} (ранее 
-известная как hipSYCL) --- открытая реализация SYCL с бэкендами NVIDIA CUDA, AMD HIP и OpenMP (центральный процессор).
+известная как hipSYCL) --- открытая реализация SYCL с бэкендами NVIDIA CUDA, AMD HIP
+и OpenMP (резервный бэкенд для центрального процессора).
 
 Преимущества AdaptiveCpp в контексте данного проекта:
 \begin{enumerate}
@@ -27,7 +28,7 @@ Vulkan Compute обеспечивает кроссплатформенность
     Ядро, написанное на C++20, компилируется для CUDA, HIP и центрального процессора без изменений.
     Выбор бэкенда задаётся флагами сборки CMake.
   \item \textit{Современный C++.}
-    Лямбда-ядра, шаблоны, \texttt{constexpr} --- всё это доступно в коде для графического процессора
+    Лямбда-ядра, шаблоны, \texttt{constexpr} --- всё это доступно в коде устройства
     без отдельного «диалекта».
   \item \textit{Единая модель памяти (USM).}
     \texttt{sycl::malloc\_device<T>} выделяет память непосредственно на устройстве;
@@ -70,7 +71,7 @@ Vulkan Compute обеспечивает кроссплатформенность
 Основные компоненты:
 \begin{itemize}
   \item \texttt{Device} --- обёртка над \texttt{sycl::device};
-    выбор устройства через \texttt{default\_gpu()} и \texttt{default\_cpu()}.
+    выбор устройства задаётся методами \texttt{default\_\allowbreak gpu()} и \texttt{default\_\allowbreak cpu()}.
   \item \texttt{Buffer<T>} --- владеющий буфер в USM-памяти устройства;
     предоставляет методы \texttt{upload()} (ЦП$\to$ГП) и \texttt{download()} (ГП$\to$ЦП).
   \item \texttt{Stream} --- обёртка над \texttt{sycl::queue};

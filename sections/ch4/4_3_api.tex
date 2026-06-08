@@ -60,7 +60,7 @@ spdlog, fmt, pugixml, nanobind) управляются через \textbf{vcpkg}
   \item \texttt{dev}~--- Debug-сборка с CUDA, конфигурация для clangd (IDE);
   \item \texttt{ci-linux-cuda}~--- полный CI на NVIDIA;
   \item \texttt{ci-linux-hip}~--- полный CI на AMD;
-  \item \texttt{ci-linux-cpu}~--- бэкенд центрального процессора с матрицей ASAN/UBSan/TSan;
+  \item \texttt{ci-linux-cpu}~--- бэкенд ЦП с матрицей санитайзеров ASAN/UBSan/TSan;
   \item \texttt{ci-determinism}~--- только Release + golden trace.
 \end{itemize}
 
